@@ -16,7 +16,7 @@ CREATE TABLE CLINICA_DENTAL.Especialidad (
     nombre_especialidad VARCHAR(255),
     descripcion_esp VARCHAR(255),
     id_estado INT,
-    FOREIGN KEY (id_estado) REFERENCES Estado(id_estado)
+    FOREIGN KEY (id_estado) REFERENCES CLINICA_DENTAL.Estado(id_estado)
 );
 
 -- Tabla Dentista
@@ -27,8 +27,8 @@ CREATE TABLE CLINICA_DENTAL.Dentista (
     email_dentista VARCHAR(255),
     id_especialidad INT,
     id_estado INT,
-    FOREIGN KEY (id_especialidad) REFERENCES Especialidad(id_especialidad),
-    FOREIGN KEY (id_estado) REFERENCES Estado(id_estado)
+    FOREIGN KEY (id_especialidad) REFERENCES CLINICA_DENTAL.Especialidad(id_especialidad),
+    FOREIGN KEY (id_estado) REFERENCES CLINICA_DENTAL.Estado(id_estado)
 );
 
 -- Tabla Paciente
@@ -41,7 +41,7 @@ CREATE TABLE CLINICA_DENTAL.Paciente (
     email_pte VARCHAR(255),
     fecha_registro DATE,
     id_estado INT,
-    FOREIGN KEY (id_estado) REFERENCES Estado(id_estado)
+    FOREIGN KEY (id_estado) REFERENCES CLINICA_DENTAL.Estado(id_estado)
 );
 
 -- Tabla Tratamiento
@@ -50,7 +50,7 @@ CREATE TABLE CLINICA_DENTAL.Tratamiento (
     nombre_tratamiento VARCHAR(255),
     descripcion_tratamiento VARCHAR(255),
     id_estado INT,
-    FOREIGN KEY (id_estado) REFERENCES Estado(id_estado)
+    FOREIGN KEY (id_estado) REFERENCES CLINICA_DENTAL.Estado(id_estado)
 );
 
 -- Tabla Diagnóstico
@@ -70,7 +70,7 @@ CREATE TABLE CLINICA_DENTAL.Metodo_pago (
     id_metodo_pago INT PRIMARY KEY,
     descripcion_metodo_pago VARCHAR(255),
     id_estado INT,
-    FOREIGN KEY (id_estado) REFERENCES Estado(id_estado)
+    FOREIGN KEY (id_estado) REFERENCES CLINICA_DENTAL.Estado(id_estado)
 );
 
 
@@ -82,10 +82,10 @@ CREATE TABLE CLINICA_DENTAL.Cita (
     id_dentista INT,
     id_tratamiento INT,
 	id_motivo INT,
-    FOREIGN KEY (id_paciente) REFERENCES Paciente(id_paciente),
-    FOREIGN KEY (id_dentista) REFERENCES Dentista(id_dentista),
-    FOREIGN KEY (id_tratamiento) REFERENCES Tratamiento(id_tratamiento),
-	FOREIGN KEY (id_motivo) REFERENCES Motivo_visita(id_motivo)
+    FOREIGN KEY (id_paciente) REFERENCES CLINICA_DENTAL.Paciente(id_paciente),
+    FOREIGN KEY (id_dentista) REFERENCES CLINICA_DENTAL.Dentista(id_dentista),
+    FOREIGN KEY (id_tratamiento) REFERENCES CLINICA_DENTAL.Tratamiento(id_tratamiento),
+	FOREIGN KEY (id_motivo) REFERENCES CLINICA_DENTAL.Motivo_visita(id_motivo)
 );
 
 -- Tabla Pago
@@ -96,9 +96,9 @@ CREATE TABLE CLINICA_DENTAL.Pago(
     id_metodo_pago INT,
     fecha DATE,
     monto DECIMAL(10, 2),
-    FOREIGN KEY (id_paciente) REFERENCES Paciente(id_paciente),
-    FOREIGN KEY (id_cita) REFERENCES Cita(id_cita),
-    FOREIGN KEY (id_metodo_pago) REFERENCES Metodo_pago(id_metodo_pago)
+    FOREIGN KEY (id_paciente) REFERENCES CLINICA_DENTAL.Paciente(id_paciente),
+    FOREIGN KEY (id_cita) REFERENCES CLINICA_DENTAL.Cita(id_cita),
+    FOREIGN KEY (id_metodo_pago) REFERENCES CLINICA_DENTAL.Metodo_pago(id_metodo_pago)
 );
 
 -- Tabla Tratamiento del paciente
@@ -107,8 +107,8 @@ CREATE TABLE CLINICA_DENTAL.Tratamiento_paciente (
     id_paciente INT,
     id_tratamiento INT,
     descripcion_trat_pte VARCHAR(255),
-    FOREIGN KEY (id_paciente) REFERENCES Paciente(id_paciente),
-    FOREIGN KEY (id_tratamiento) REFERENCES Tratamiento(id_tratamiento)
+    FOREIGN KEY (id_paciente) REFERENCES CLINICA_DENTAL.Paciente(id_paciente),
+    FOREIGN KEY (id_tratamiento) REFERENCES CLINICA_DENTAL.Tratamiento(id_tratamiento)
 );
 
 -- Tabla Historial clínico
@@ -120,10 +120,10 @@ CREATE TABLE CLINICA_DENTAL.Historial_clinico (
     observaciones VARCHAR(255),
     id_trat_pte INT,
     id_diagnostico INT,
-    FOREIGN KEY (id_paciente) REFERENCES Paciente(id_paciente),
-    FOREIGN KEY (id_dentista) REFERENCES Dentista(id_dentista),
-    FOREIGN KEY (id_trat_pte) REFERENCES Tratamiento_paciente(id_trat_pte),
-    FOREIGN KEY (id_diagnostico) REFERENCES Diagnostico(id_diagnostico)
+    FOREIGN KEY (id_paciente) REFERENCES CLINICA_DENTAL.Paciente(id_paciente),
+    FOREIGN KEY (id_dentista) REFERENCES CLINICA_DENTAL.Dentista(id_dentista),
+    FOREIGN KEY (id_trat_pte) REFERENCES CLINICA_DENTAL.Tratamiento_paciente(id_trat_pte),
+    FOREIGN KEY (id_diagnostico) REFERENCES CLINICA_DENTAL.Diagnostico(id_diagnostico)
 );
 
 ----Inserción de valores
@@ -323,7 +323,7 @@ INTO CLINICA_DENTAL.Diagnostico (id_diagnostico, descripcion_diagnostico) VALUES
 INTO CLINICA_DENTAL.Diagnostico (id_diagnostico, descripcion_diagnostico) VALUES (4, 'Absceso Dental')
 INTO CLINICA_DENTAL.Diagnostico (id_diagnostico, descripcion_diagnostico) VALUES (5, 'Bruxismo')
 INTO CLINICA_DENTAL.Diagnostico (id_diagnostico, descripcion_diagnostico) VALUES (6, 'Maloclusión')
-INTO CLINICA_DENTAL.Diagnostico (id_diagnostico, descripcion_diagnostico) VALUES (7, 'Aftas o Úlceras Orales')
+INTO CLINICA_DENTAL.Diagnostico (id_diagnostico, descripcion_diagnostico) VALUES (7, 'Aftas o úlceras Orales')
 INTO CLINICA_DENTAL.Diagnostico (id_diagnostico, descripcion_diagnostico) VALUES (8, 'Enfermedades de la Mucosa Oral')
 INTO CLINICA_DENTAL.Diagnostico (id_diagnostico, descripcion_diagnostico) VALUES (9, 'Diente Impactado')
 INTO CLINICA_DENTAL.Diagnostico (id_diagnostico, descripcion_diagnostico) VALUES (10, 'Dientes Fracturados o Rotos')
@@ -446,10 +446,190 @@ INTO CLINICA_DENTAL.Historial_clinico (id_historial, id_paciente, id_dentista, f
 INTO CLINICA_DENTAL.Historial_clinico (id_historial, id_paciente, id_dentista, fecha, observaciones, id_trat_pte, id_diagnostico) VALUES (14, 14, 9, TO_DATE('10-05-2022 16:30:00', 'DD-MM-YYYY HH24:MI:SS'), 'Requiere ajuste en la ortodoncia.', 14, 5) 
 INTO CLINICA_DENTAL.Historial_clinico (id_historial, id_paciente, id_dentista, fecha, observaciones, id_trat_pte, id_diagnostico) VALUES (15, 15, 6, TO_DATE('07-06-2023 08:00:00', 'DD-MM-YYYY HH24:MI:SS'), 'Sin observaciones anormales.', 15, 19)
 SELECT 1 FROM DUAL;
-SELECT * FROM HISTORIAL_CLINICO;
+SELECT * FROM CLINICA_DENTAL.HISTORIAL_CLINICO;
+
 
 ----Procedimientos almacenados
+--------------------------------------------------------------------------------
+---- CRUD
+--------------------------------------------------------------------------------
+-- 1. Agregar un nuevo paciente
+CREATE OR REPLACE PROCEDURE SP_agregar_paciente (
+    id_paciente IN NUMBER, 
+    nombre_paciente IN VARCHAR2, 
+    fecha_nacimiento IN DATE, 
+    edad IN NUMBER, 
+    telefono IN VARCHAR2, 
+    email IN VARCHAR2, 
+    fecha_registro IN DATE, 
+    id_estado IN NUMBER
+)
+AS
+BEGIN
+    INSERT INTO CLINICA_DENTAL.Paciente (id_paciente, nombre_paciente, fecha_nacimiento, edad, telefono_pte, email_pte, fecha_registro, id_estado)
+    VALUES (id_paciente, nombre_paciente, fecha_nacimiento, edad, telefono, email, fecha_registro, id_estado);
+
+    DBMS_OUTPUT.PUT_LINE('Paciente agregado: ' || id_paciente || ' - ' || nombre_paciente);
+END;
+/
+
+--------------------------------------------------------------------------------
+-- 2. Actualizar informacion paciente
+CREATE OR REPLACE PROCEDURE SP_actualizar_paciente (
+    id_paciente IN NUMBER,
+    nombre_paciente IN VARCHAR2 DEFAULT NULL,
+    fecha_nacimiento IN DATE DEFAULT NULL,
+    edad IN NUMBER DEFAULT NULL,
+    telefono_pte IN VARCHAR2 DEFAULT NULL,
+    email_pte IN VARCHAR2 DEFAULT NULL,
+    fecha_registro IN DATE DEFAULT NULL,
+    id_estado IN NUMBER DEFAULT NULL
+)
+AS
+BEGIN
+    UPDATE CLINICA_DENTAL.Paciente
+    SET nombre_paciente = NVL(nombre_paciente, nombre_paciente),
+        fecha_nacimiento = NVL(fecha_nacimiento, fecha_nacimiento),
+        edad = NVL(edad, edad),
+        telefono_pte = NVL(telefono_pte, telefono_pte),
+        email_pte = NVL(email_pte, email_pte),
+        fecha_registro = NVL(fecha_registro, fecha_registro),
+        id_estado = NVL(id_estado, id_estado)
+    WHERE id_paciente = id_paciente;
+
+    IF SQL%ROWCOUNT = 0 THEN
+        DBMS_OUTPUT.PUT_LINE('No se encontró el paciente. Verifique el ID.');
+    END IF;
+END;
+/
+
+--------------------------------------------------------------------------------
+-- 3. Cambiar estado paciente
+CREATE OR REPLACE PROCEDURE SP_actualizar_estado_paciente (
+    id_paciente IN NUMBER,
+    id_estado IN NUMBER
+)
+AS
+BEGIN
+    UPDATE CLINICA_DENTAL.Paciente
+    SET id_estado = id_estado
+    WHERE id_paciente = id_paciente;
+
+    IF SQL%ROWCOUNT = 0 THEN
+        DBMS_OUTPUT.PUT_LINE('No se encontró el paciente. Verifique el ID.');
+    END IF;
+END;
+/
+
+--------------------------------------------------------------------------------
+-- 4. Agregar nuevo dentista
+CREATE OR REPLACE PROCEDURE SP_agregar_dentista (
+    id_dentista IN NUMBER,
+    nombre_dentista IN VARCHAR2,
+    telefono_dentista IN VARCHAR2,
+    email_dentista IN VARCHAR2,
+    id_especialidad IN NUMBER,
+    id_estado IN NUMBER
+)
+AS
+BEGIN
+    INSERT INTO CLINICA_DENTAL.Dentista (id_dentista, nombre_dentista, telefono_dentista, email_dentista, id_especialidad, id_estado)
+    VALUES (id_dentista, nombre_dentista, telefono_dentista, email_dentista, id_especialidad, id_estado);
+
+    DBMS_OUTPUT.PUT_LINE('Dentista agregado: ' || id_dentista || ' - ' || nombre_dentista);
+END;
+/
+
+
+--------------------------------------------------------------------------------
+-- 5. Actualizar informacion dentista
+CREATE OR REPLACE PROCEDURE SP_actualizar_dentista (
+    id_dentista IN NUMBER,
+    nombre_dentista IN VARCHAR2 DEFAULT NULL,
+    telefono_dentista IN VARCHAR2 DEFAULT NULL,
+    email_dentista IN VARCHAR2 DEFAULT NULL,
+    id_especialidad IN NUMBER DEFAULT NULL,
+    id_estado IN NUMBER DEFAULT NULL
+)
+AS
+BEGIN
+    UPDATE CLINICA_DENTAL.Dentista
+    SET nombre_dentista = NVL(nombre_dentista, nombre_dentista),
+        telefono_dentista = NVL(telefono_dentista, telefono_dentista),
+        email_dentista = NVL(email_dentista, email_dentista),
+        id_especialidad = NVL(id_especialidad, id_especialidad),
+        id_estado = NVL(id_estado, id_estado)
+    WHERE id_dentista = id_dentista;
+
+    IF SQL%ROWCOUNT = 0 THEN
+        DBMS_OUTPUT.PUT_LINE('No se encontró el dentista. Verifique el ID.');
+    END IF;
+END;
+/
+
+
+--------------------------------------------------------------------------------
+-- 6. Eliminar dentista
+CREATE OR REPLACE PROCEDURE SP_eliminar_dentista (
+    id_dentista IN NUMBER
+)
+AS
+BEGIN
+    DELETE FROM CLINICA_DENTAL.Historial_clinico WHERE id_dentista = id_dentista;
+    DELETE FROM CLINICA_DENTAL.Cita WHERE id_dentista = id_dentista;
+    DELETE FROM CLINICA_DENTAL.Dentista WHERE id_dentista = id_dentista;
+
+    DBMS_OUTPUT.PUT_LINE('Dentista eliminado con ID: ' || id_dentista);
+END;
+/
+--------------------------------------------------------------------------------
+
+
+
+
 ----Vistas
+--------------------------------------------------------------------------------
+--VISTAS
+--------------------------------------------------------------------------------
+---Vista 1: Vista de las citas programadas
+CREATE VIEW Vista_Citas_Programadas AS
+SELECT 
+    c.id_cita,
+    c.fecha_hora,
+    p.nombre AS nombre_paciente,
+    d.nombre AS nombre_dentista,
+    t.descripcion_trat_pte,
+    m.descripcion_motivo
+FROM 
+    CLINICA_DENTAL.Cita c
+INNER JOIN CLINICA_DENTAL.Paciente p ON c.id_paciente = p.id_paciente
+INNER JOIN CLINICA_DENTAL.Dentista d ON c.id_dentista = d.id_dentista
+INNER JOIN CLINICA_DENTAL.Tratamiento_paciente t ON c.id_tratamiento = t.id_trat_pte
+INNER JOIN CLINICA_DENTAL.Motivo_visita m ON c.id_motivo = m.id_motivo;
+
+--------------------------------------------------------------------------------
+---Vista 2: Vista de la informacion del historial del paciente
+CREATE VIEW Vista_Historial_Paciente AS
+SELECT 
+    h.id_historial,
+    p.id_paciente,
+    p.nombre AS nombre_paciente,
+    d.nombre AS nombre_dentista,
+    h.fecha,
+    h.observaciones,
+    t.descripcion_trat_pte,
+    diag.descripcion_diagnostico
+FROM 
+    CLINICA_DENTAL.Historial_clinico h
+INNER JOIN CLINICA_DENTAL.Paciente p ON h.id_paciente = p.id_paciente
+INNER JOIN CLINICA_DENTAL.Dentista d ON h.id_dentista = d.id_dentista
+INNER JOIN CLINICA_DENTAL.Tratamiento_paciente t ON h.id_trat_pte = t.id_trat_pte
+INNER JOIN CLINICA_DENTAL.Diagnostico diag ON h.id_diagnostico = diag.id_diagnostico;
+
+--------------------------------------------------------------------------------
+
+
+
 ----Funciones
 --------------------------------------------------------------------------------
 --FUNCIONES
@@ -463,7 +643,7 @@ BEGIN
     -- Calcula el ingreso total por el metodo de pago
     SELECT SUM(monto)
     INTO totalIngreso
-    FROM Pago
+    FROM CLINICA_DENTAL.Pago
     WHERE id_metodo_pago = metodo_pago_id;
 
     -- Devuelve el ingreso total calculado
@@ -482,7 +662,7 @@ BEGIN
     INTO tratamientoIdMasComun
     FROM (
         SELECT id_tratamiento, COUNT(*) AS frecuencia
-        FROM Tratamiento_paciente
+        FROM CLINICA_DENTAL.Tratamiento_paciente
         GROUP BY id_tratamiento
         ORDER BY frecuencia DESC
     )
@@ -502,7 +682,7 @@ IS
 BEGIN
     SELECT AVG(ROUND(MONTHS_BETWEEN(SYSDATE, fecha_nacimiento) / 12, 2))
     INTO edadPromedio
-    FROM Paciente;
+    FROM CLINICA_DENTAL.Paciente;
 
     RETURN edadPromedio;
 END;
@@ -522,10 +702,10 @@ BEGIN
            ', Especialidad: ' || nombre_especialidad || 
            ', Estado: ' || descripcion_estado
     INTO resultado
-    FROM Dentista
-    JOIN Especialidad ON Dentista.id_especialidad = Especialidad.id_especialidad
-    JOIN Estado ON Dentista.id_estado = Estado.id_estado
-    WHERE Dentista.id_dentista = dentista_id;
+    FROM CLINICA_DENTAL.Dentista
+    JOIN CLINICA_DENTAL.Especialidad ON CLINICA_DENTAL.Dentista.id_especialidad = CLINICA_DENTAL.Especialidad.id_especialidad
+    JOIN CLINICA_DENTAL.Estado ON CLINICA_DENTAL.Dentista.id_estado = CLINICA_DENTAL.Estado.id_estado
+    WHERE CLINICA_DENTAL.Dentista.id_dentista = dentista_id;
 
     RETURN resultado;
 END;
@@ -546,9 +726,9 @@ BEGIN
            ', Email: ' || email_pte || 
            ', Estado: ' || descripcion_estado
     INTO resultado
-    FROM Paciente
-    JOIN Estado ON Paciente.id_estado = Estado.id_estado
-    WHERE Paciente.id_paciente = paciente_id;
+    FROM CLINICA_DENTAL.Paciente
+    JOIN CLINICA_DENTAL.Estado ON CLINICA_DENTAL.Paciente.id_estado = CLINICA_DENTAL.Estado.id_estado
+    WHERE CLINICA_DENTAL.Paciente.id_paciente = paciente_id;
 
     RETURN resultado;
 END;
@@ -565,7 +745,7 @@ BEGIN
     -- Calcula la suma de los pagos por paciente
     SELECT SUM(monto)
     INTO totalPagos
-    FROM Pago
+    FROM CLINICA_DENTAL.Pago
     WHERE id_paciente = paciente_id;
 
     -- Si no hay pagos, retorna 0
@@ -587,8 +767,8 @@ BEGIN
     -- Cuenta las citas por especialidad
     SELECT COUNT(*)
     INTO totalCitas
-    FROM Cita c
-    JOIN Dentista d ON c.id_dentista = d.id_dentista
+    FROM CLINICA_DENTAL.Cita c
+    JOIN CLINICA_DENTAL.Dentista d ON c.id_dentista = d.id_dentista
     WHERE d.id_especialidad = especialidad_id;
 
     -- Si no hay citas, retorna 0
