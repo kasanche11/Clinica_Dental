@@ -451,3 +451,135 @@ SELECT * FROM HISTORIAL_CLINICO;
 ----Procedimientos almacenados
 ----Vistas
 ----Funciones
+--------------------------------------------------------------------------------
+--FUNCION 1: Ingreso total por metodo de pago
+CREATE OR REPLACE FUNCTION IngresoTotalPorMetodoPago(metodo_pago_id INT)
+RETURN NUMBER
+AS
+    totalIngreso NUMBER;
+BEGIN
+    -- Calcula el ingreso total por el metodo de pago
+    SELECT SUM(monto)
+    INTO totalIngreso
+    FROM Pago
+    WHERE id_metodo_pago = metodo_pago_id;
+
+    -- Devuelve el ingreso total calculado
+    RETURN totalIngreso;
+END;
+/
+--------------------------------------------------------------------------------
+--FUNCION 2: Tratamiento mas comun
+CREATE OR REPLACE FUNCTION TratamientoMasComun
+RETURN NUMBER
+IS
+    tratamientoIdMasComun NUMBER;
+BEGIN
+    SELECT id_tratamiento
+    INTO tratamientoIdMasComun
+    FROM (
+        SELECT id_tratamiento, COUNT(*) AS frecuencia
+        FROM Tratamiento_paciente
+        GROUP BY id_tratamiento
+        ORDER BY frecuencia DESC
+    )
+    WHERE ROWNUM = 1;
+
+    RETURN tratamientoIdMasComun;
+END;
+/
+-- Llamada de prueba:
+SELECT TratamientoMasComun() AS Tratamiento_mas_comun FROM DUAL;
+--------------------------------------------------------------------------------
+--FUNCION 3: Edad promedio de los pacientes
+CREATE OR REPLACE FUNCTION EdadPromedioPacientes
+RETURN NUMBER
+IS
+    edadPromedio NUMBER;
+BEGIN
+    SELECT AVG(ROUND(MONTHS_BETWEEN(SYSDATE, fecha_nacimiento) / 12, 2))
+    INTO edadPromedio
+    FROM Paciente;
+
+    RETURN edadPromedio;
+END;
+/
+-- Llamada de prueba:
+SELECT EdadPromedioPacientes() AS Edad_promedio_pacientes FROM DUAL;
+--------------------------------------------------------------------------------
+--FUNCION 4: Informacion de un dentista por su ID
+CREATE OR REPLACE FUNCTION ObtenerInfoDentista(dentista_id IN NUMBER)
+RETURN VARCHAR2
+IS
+    resultado VARCHAR2(1000);
+BEGIN
+    SELECT 'Nombre: ' || nombre_dentista || 
+           ', Telefono: ' || telefono_dentista || 
+           ', Email: ' || email_dentista || 
+           ', Especialidad: ' || nombre_especialidad || 
+           ', Estado: ' || descripcion_estado
+    INTO resultado
+    FROM Dentista
+    JOIN Especialidad ON Dentista.id_especialidad = Especialidad.id_especialidad
+    JOIN Estado ON Dentista.id_estado = Estado.id_estado
+    WHERE Dentista.id_dentista = dentista_id;
+
+    RETURN resultado;
+END;
+/
+-- Llamada de prueba:
+SELECT ObtenerInfoDentista(4) AS Info_Dentista FROM DUAL;
+--------------------------------------------------------------------------------
+--FUNCION 5: Informacion de un paciente por su ID
+CREATE OR REPLACE FUNCTION ObtenerInfoPaciente(paciente_id IN NUMBER)
+RETURN VARCHAR2
+IS
+    resultado VARCHAR2(1000);
+BEGIN
+    SELECT 'Nombre: ' || nombre_paciente || 
+           ', Fecha de Nacimiento: ' || TO_CHAR(fecha_nacimiento, 'DD/MM/YYYY') || 
+           ', Edad: ' || edad || 
+           ', Telefono: ' || telefono_pte || 
+           ', Email: ' || email_pte || 
+           ', Estado: ' || descripcion_estado
+    INTO resultado
+    FROM Paciente
+    JOIN Estado ON Paciente.id_estado = Estado.id_estado
+    WHERE Paciente.id_paciente = paciente_id;
+
+    RETURN resultado;
+END;
+/
+-- Llamada de prueba:
+SELECT ObtenerInfoPaciente(4) AS Info_Paciente FROM DUAL;
+--------------------------------------------------------------------------------
+--FUNCION 6: Cantidad de pagos por cliente
+CREATE OR REPLACE FUNCTION TotalPagosPorPaciente(paciente_id INT)
+RETURN NUMBER
+AS
+    totalPagos NUMBER;
+BEGIN
+    SELECT SUM(monto)
+    INTO totalPagos
+    FROM Pago
+    WHERE id_paciente = paciente_id;
+
+    RETURN NVL(totalPagos, 0); -- Si no hay pagos, devuelve 0
+END;
+/
+--------------------------------------------------------------------------------
+--FUNCION 7: Citas ordenadas por especialidad
+CREATE OR REPLACE FUNCTION TotalCitasPorEspecialidad(especialidad_id INT)
+RETURN NUMBER
+AS
+    totalCitas NUMBER;
+BEGIN
+    SELECT COUNT(*)
+    INTO totalCitas
+    FROM Cita c
+    JOIN Dentista d ON c.id_dentista = d.id_dentista
+    WHERE d.id_especialidad = especialidad_id;
+
+    RETURN NVL(totalCitas, 0); -- Si no hay citas, devuelve 0
+END;
+/
