@@ -452,8 +452,10 @@ SELECT * FROM HISTORIAL_CLINICO;
 ----Vistas
 ----Funciones
 --------------------------------------------------------------------------------
+--FUNCIONES
+--------------------------------------------------------------------------------
 --FUNCION 1: Ingreso total por metodo de pago
-CREATE OR REPLACE FUNCTION IngresoTotalPorMetodoPago(metodo_pago_id INT)
+CREATE OR REPLACE FUNCTION IngresoTotalPorMetodoPago(metodo_pago_id NUMBER)
 RETURN NUMBER
 AS
     totalIngreso NUMBER;
@@ -468,6 +470,7 @@ BEGIN
     RETURN totalIngreso;
 END;
 /
+SELECT IngresoTotalPorMetodoPago(1) AS TotalIngreso FROM DUAL;
 --------------------------------------------------------------------------------
 --FUNCION 2: Tratamiento mas comun
 CREATE OR REPLACE FUNCTION TratamientoMasComun
@@ -553,33 +556,49 @@ END;
 -- Llamada de prueba:
 SELECT ObtenerInfoPaciente(4) AS Info_Paciente FROM DUAL;
 --------------------------------------------------------------------------------
---FUNCION 6: Cantidad de pagos por cliente
-CREATE OR REPLACE FUNCTION TotalPagosPorPaciente(paciente_id INT)
+--FUNCION 6: Cantidad de pago por cliente
+CREATE OR REPLACE FUNCTION TotalPagosPorPaciente(paciente_id NUMBER)
 RETURN NUMBER
 AS
     totalPagos NUMBER;
 BEGIN
+    -- Calcula la suma de los pagos por paciente
     SELECT SUM(monto)
     INTO totalPagos
     FROM Pago
     WHERE id_paciente = paciente_id;
 
-    RETURN NVL(totalPagos, 0); -- Si no hay pagos, devuelve 0
+    -- Si no hay pagos, retorna 0
+    IF totalPagos IS NULL THEN
+        RETURN 0;
+    ELSE
+        RETURN totalPagos;
+    END IF;
 END;
 /
+SELECT TotalPagosPorPaciente(1) AS TotalPagos FROM DUAL;
 --------------------------------------------------------------------------------
 --FUNCION 7: Citas ordenadas por especialidad
-CREATE OR REPLACE FUNCTION TotalCitasPorEspecialidad(especialidad_id INT)
+CREATE OR REPLACE FUNCTION TotalCitasPorEspecialidad(especialidad_id NUMBER)
 RETURN NUMBER
 AS
     totalCitas NUMBER;
 BEGIN
+    -- Cuenta las citas por especialidad
     SELECT COUNT(*)
     INTO totalCitas
     FROM Cita c
     JOIN Dentista d ON c.id_dentista = d.id_dentista
     WHERE d.id_especialidad = especialidad_id;
 
-    RETURN NVL(totalCitas, 0); -- Si no hay citas, devuelve 0
+    -- Si no hay citas, retorna 0
+    IF totalCitas IS NULL THEN
+        RETURN 0;
+    ELSE
+        RETURN totalCitas;
+    END IF;
 END;
 /
+SELECT TotalCitasPorEspecialidad(3) AS TotalCitas FROM DUAL;
+--------------------------------------------------------------------------------
+
