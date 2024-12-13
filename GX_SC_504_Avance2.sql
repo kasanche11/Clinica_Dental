@@ -582,56 +582,511 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Dentista eliminado con ID: ' || id_dentista);
 END;
 /
---------------------------------------------------------------------------------
 
+-- 7. Eliminar los registros del dentista
+CREATE OR REPLACE PROCEDURE sp_eliminar_registros_dentistas (
+    p_id_dentista IN NUMBER
+) IS
+BEGIN
+    DELETE FROM historial_clinico
+    WHERE
+        id_dentista = p_id_dentista;
 
+    DELETE FROM cita
+    WHERE
+        id_dentista = p_id_dentista;
 
+    DELETE FROM dentista
+    WHERE
+        id_dentista = p_id_dentista;
 
-----Vistas
---------------------------------------------------------------------------------
+    dbms_output.put_line('Registros eliminados con éxito para el ID del dentista: ' || p_id_dentista);
+EXCEPTION
+    WHEN OTHERS THEN
+        dbms_output.put_line('Error al eliminar los registros del dentista: ' || sqlerrm);
+END;
+/
+
+-- 8. Agregar nueva especialidad
+CREATE OR REPLACE PROCEDURE SP_agregar_especialidad (
+    p_id_especialidad IN NUMBER, 
+    p_nombre_especialidad IN VARCHAR2,
+    p_descripcion_esp IN VARCHAR2,
+    p_id_estado IN NUMBER
+)
+IS
+    v_count NUMBER; 
+BEGIN
+    SELECT COUNT(*) 
+    INTO v_count
+    FROM Especialidad
+    WHERE nombre_especialidad = p_nombre_especialidad;
+
+    IF v_count > 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Especialidad ya existente en el sistema: ' || p_nombre_especialidad);
+    ELSE
+        INSERT INTO Especialidad (
+            id_especialidad, 
+            nombre_especialidad, 
+            descripcion_esp, 
+            id_estado
+        ) 
+        VALUES (
+            p_id_especialidad, 
+            p_nombre_especialidad, 
+            p_descripcion_esp, 
+            p_id_estado
+        );
+
+        DBMS_OUTPUT.PUT_LINE('Nueva especialidad agregada: ' || p_nombre_especialidad);
+    END IF;
+END;
+/
+
+-- 9. Actualizar información especialidad
+CREATE OR REPLACE PROCEDURE sp_actualizar_especialidad (
+    p_id_especialidad     IN NUMBER,
+    p_nombre_especialidad IN VARCHAR2 DEFAULT NULL,
+    p_descripcion_esp     IN VARCHAR2 DEFAULT NULL,
+    p_id_estado           IN NUMBER DEFAULT NULL
+) IS
+    v_exists NUMBER := 0;
+BEGIN
+    SELECT
+        COUNT(*)
+    INTO v_exists
+    FROM
+        especialidad
+    WHERE
+        id_especialidad = p_id_especialidad;
+
+    IF v_exists = 0 THEN
+        dbms_output.put_line('No se encontró especialidad, por favor indique el ID correcto.');
+    ELSE
+        UPDATE especialidad
+        SET
+            nombre_especialidad =
+                CASE
+                    WHEN p_nombre_especialidad IS NOT NULL THEN
+                        p_nombre_especialidad
+                    ELSE
+                        nombre_especialidad
+                END,
+            descripcion_esp =
+                CASE
+                    WHEN p_descripcion_esp IS NOT NULL THEN
+                        p_descripcion_esp
+                    ELSE
+                        descripcion_esp
+                END,
+            id_estado =
+                CASE
+                    WHEN p_id_estado IS NOT NULL THEN
+                        p_id_estado
+                    ELSE
+                        id_estado
+                END
+        WHERE
+            id_especialidad = p_id_especialidad;
+
+        dbms_output.put_line('Especialidad actualizada correctamente para el ID: ' || p_id_especialidad);
+    END IF;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        dbms_output.put_line('Error al intentar actualizar la especialidad. Verifique los datos proporcionados.');
+END;
+/
+
+-- 10. Agregar nuevo historial clinico
+CREATE OR REPLACE PROCEDURE sp_agregar_historial_clinico (
+    p_id_historial   IN NUMBER,
+    p_id_paciente    IN NUMBER,
+    p_id_dentista    IN NUMBER,
+    p_fecha          IN DATE,
+    p_observaciones  IN VARCHAR2,
+    p_id_trat_pte    IN NUMBER,
+    p_id_diagnostico IN NUMBER
+) IS
+BEGIN
+    INSERT INTO historial_clinico (
+        id_historial,
+        id_paciente,
+        id_dentista,
+        fecha,
+        observaciones,
+        id_trat_pte,
+        id_diagnostico
+    ) VALUES (
+        p_id_historial,
+        p_id_paciente,
+        p_id_dentista,
+        p_fecha,
+        p_observaciones,
+        p_id_trat_pte,
+        p_id_diagnostico
+    );
+
+    dbms_output.put_line('Historial clínico creado para el ID: ' || p_id_historial);
+END;
+/
+
+-- 11. Agregar una nueva cita
+CREATE OR REPLACE PROCEDURE sp_agregar_cita (
+    p_id_cita        IN NUMBER,
+    p_fecha_hora     IN DATE,
+    p_id_paciente    IN NUMBER,
+    p_id_dentista    IN NUMBER,
+    p_id_tratamiento IN NUMBER,
+    p_id_motivo      IN NUMBER
+) IS
+BEGIN
+    INSERT INTO cita (
+        id_cita,
+        fecha_hora,
+        id_paciente,
+        id_dentista,
+        id_tratamiento,
+        id_motivo
+    ) VALUES (
+        p_id_cita,
+        p_fecha_hora,
+        p_id_paciente,
+        p_id_dentista,
+        p_id_tratamiento,
+        p_id_motivo
+    );
+
+    dbms_output.put_line('Cita agregada con éxito para el ID: ' || p_id_cita);
+END;
+/
+
+-- 12. Actualizar información de una cita
+CREATE OR REPLACE PROCEDURE sp_actualizar_cita (
+    p_id_cita        IN NUMBER,
+    p_fecha_hora     IN DATE DEFAULT NULL,
+    p_id_paciente    IN NUMBER DEFAULT NULL,
+    p_id_dentista    IN NUMBER DEFAULT NULL,
+    p_id_tratamiento IN NUMBER DEFAULT NULL,
+    p_id_motivo      IN NUMBER DEFAULT NULL
+) IS
+    v_exists NUMBER := 0;
+BEGIN
+    SELECT
+        COUNT(*)
+    INTO v_exists
+    FROM
+        cita
+    WHERE
+        id_cita = p_id_cita;
+
+    IF v_exists = 0 THEN
+        dbms_output.put_line('No se encontró cita, verifique ID.');
+    ELSE
+        UPDATE cita
+        SET
+            fecha_hora =
+                CASE
+                    WHEN p_fecha_hora IS NOT NULL THEN
+                        p_fecha_hora
+                    ELSE
+                        fecha_hora
+                END,
+            id_paciente =
+                CASE
+                    WHEN p_id_paciente IS NOT NULL THEN
+                        p_id_paciente
+                    ELSE
+                        id_paciente
+                END,
+            id_dentista =
+                CASE
+                    WHEN p_id_dentista IS NOT NULL THEN
+                        p_id_dentista
+                    ELSE
+                        id_dentista
+                END,
+            id_tratamiento =
+                CASE
+                    WHEN p_id_tratamiento IS NOT NULL THEN
+                        p_id_tratamiento
+                    ELSE
+                        id_tratamiento
+                END,
+            id_motivo =
+                CASE
+                    WHEN p_id_motivo IS NOT NULL THEN
+                        p_id_motivo
+                    ELSE
+                        id_motivo
+                END
+        WHERE
+            id_cita = p_id_cita;
+
+        dbms_output.put_line('Cita actualizada con éxito para el ID: ' || p_id_cita);
+    END IF;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        dbms_output.put_line('Error al intentar actualizar la cita. Verifique los datos proporcionados.');
+END;
+/
+
+-- 13. Agregar nuevo tratamiento
+CREATE OR REPLACE PROCEDURE sp_agregar_tratamiento (
+    p_id_tratamiento          IN NUMBER,
+    p_nombre_tratamiento      IN VARCHAR2,
+    p_descripcion_tratamiento IN VARCHAR2,
+    p_id_estado               IN NUMBER
+) IS
+BEGIN
+    INSERT INTO tratamiento (
+        id_tratamiento,
+        nombre_tratamiento,
+        descripcion_tratamiento,
+        id_estado
+    ) VALUES (
+        p_id_tratamiento,
+        p_nombre_tratamiento,
+        p_descripcion_tratamiento,
+        p_id_estado
+    );
+
+    dbms_output.put_line('Nuevo tratamiento agregado con ID: ' || p_id_tratamiento);
+END;
+/
+
+CREATE OR REPLACE PROCEDURE sp_actualizar_tratamiento (
+    p_id_tratamiento          IN NUMBER,
+    p_nombre_tratamiento      IN VARCHAR2 DEFAULT NULL,
+    p_descripcion_tratamiento IN VARCHAR2 DEFAULT NULL,
+    p_id_estado               IN NUMBER DEFAULT NULL
+) IS
+    v_exists NUMBER := 0;
+BEGIN
+    SELECT
+        COUNT(*)
+    INTO v_exists
+    FROM
+        tratamiento
+    WHERE
+        id_tratamiento = p_id_tratamiento;
+
+    IF v_exists = 0 THEN
+        dbms_output.put_line('No se encontró el tratamiento. Verifique el ID.');
+    ELSE
+        UPDATE tratamiento
+        SET
+            nombre_tratamiento =
+                CASE
+                    WHEN p_nombre_tratamiento IS NOT NULL THEN
+                        p_nombre_tratamiento
+                    ELSE
+                        nombre_tratamiento
+                END,
+            descripcion_tratamiento =
+                CASE
+                    WHEN p_descripcion_tratamiento IS NOT NULL THEN
+                        p_descripcion_tratamiento
+                    ELSE
+                        descripcion_tratamiento
+                END,
+            id_estado =
+                CASE
+                    WHEN p_id_estado IS NOT NULL THEN
+                        p_id_estado
+                    ELSE
+                        id_estado
+                END
+        WHERE
+            id_tratamiento = p_id_tratamiento;
+
+        dbms_output.put_line('Tratamiento actualizado.');
+    END IF;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        dbms_output.put_line('Verifique los datos.');
+END;
+/
+
+CREATE OR REPLACE PROCEDURE sp_actualizar_trat_pte (
+    p_id_trat_pte          IN NUMBER,
+    p_id_paciente          IN NUMBER DEFAULT NULL,
+    p_id_tratamiento       IN NUMBER DEFAULT NULL,
+    p_descripcion_trat_pte IN VARCHAR2 DEFAULT NULL
+) IS
+    v_exists NUMBER := 0;
+BEGIN
+    SELECT
+        COUNT(*)
+    INTO v_exists
+    FROM
+        tratamiento_paciente
+    WHERE
+        id_trat_pte = p_id_trat_pte;
+
+    IF v_exists = 0 THEN
+        dbms_output.put_line('No se encontró el tratamiento para el paciente. Verifique el ID.');
+    ELSE
+        UPDATE tratamiento_paciente
+        SET
+            id_paciente =
+                CASE
+                    WHEN p_id_paciente IS NOT NULL THEN
+                        p_id_paciente
+                    ELSE
+                        id_paciente
+                END,
+            id_tratamiento =
+                CASE
+                    WHEN p_id_tratamiento IS NOT NULL THEN
+                        p_id_tratamiento
+                    ELSE
+                        id_tratamiento
+                END,
+            descripcion_trat_pte =
+                CASE
+                    WHEN p_descripcion_trat_pte IS NOT NULL THEN
+                        p_descripcion_trat_pte
+                    ELSE
+                        descripcion_trat_pte
+                END
+        WHERE
+            id_trat_pte = p_id_trat_pte;
+
+        dbms_output.put_line('Tratamiento actualizado.');
+    END IF;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        dbms_output.put_line('Verifique los datos.');
+END;
+/
+	
 --VISTAS
 --------------------------------------------------------------------------------
 ---Vista 1: Vista de las citas programadas
-CREATE VIEW Vista_Citas_Programadas AS
-SELECT 
-    c.id_cita,
-    c.fecha_hora,
-    p.nombre AS nombre_paciente,
-    d.nombre AS nombre_dentista,
-    t.descripcion_trat_pte,
-    m.descripcion_motivo
-FROM 
-    CLINICA_DENTAL.Cita c
-INNER JOIN CLINICA_DENTAL.Paciente p ON c.id_paciente = p.id_paciente
-INNER JOIN CLINICA_DENTAL.Dentista d ON c.id_dentista = d.id_dentista
-INNER JOIN CLINICA_DENTAL.Tratamiento_paciente t ON c.id_tratamiento = t.id_trat_pte
-INNER JOIN CLINICA_DENTAL.Motivo_visita m ON c.id_motivo = m.id_motivo;
+CREATE OR REPLACE VIEW vista_citas_programadas AS
+    SELECT
+        c.id_cita,
+        c.fecha_hora,
+        p.nombre_paciente AS nombre_paciente,
+        d.nombre_dentista AS nombre_dentista,
+        t.descripcion_trat_pte,
+        m.descripcion_motivo
+    FROM
+             clinica_dental.cita c
+        INNER JOIN clinica_dental.paciente             p ON c.id_paciente = p.id_paciente
+        INNER JOIN clinica_dental.dentista             d ON c.id_dentista = d.id_dentista
+        INNER JOIN clinica_dental.tratamiento_paciente t ON c.id_tratamiento = t.id_trat_pte
+        INNER JOIN clinica_dental.motivo_visita        m ON c.id_motivo = m.id_motivo;
 
 --------------------------------------------------------------------------------
 ---Vista 2: Vista de la informacion del historial del paciente
-CREATE VIEW Vista_Historial_Paciente AS
+CREATE VIEW vista_historial_paciente AS
+    SELECT
+        h.id_historial,
+        p.id_paciente,
+        p.nombre_paciente AS nombre_paciente,
+        d.nombre_dentista AS nombre_dentista,
+        h.fecha,
+        h.observaciones,
+        t.descripcion_trat_pte,
+        diag.descripcion_diagnostico
+    FROM
+             clinica_dental.historial_clinico h
+        INNER JOIN clinica_dental.paciente             p ON h.id_paciente = p.id_paciente
+        INNER JOIN clinica_dental.dentista             d ON h.id_dentista = d.id_dentista
+        INNER JOIN clinica_dental.tratamiento_paciente t ON h.id_trat_pte = t.id_trat_pte
+        INNER JOIN clinica_dental.diagnostico          diag ON h.id_diagnostico = diag.id_diagnostico;
+
+--------------------------------------------------------------------------------
+---Vista 3: Vista de pacientes activos
+CREATE OR REPLACE VIEW pacientes_activos AS
+    SELECT
+        id_paciente,
+        nombre_paciente,
+        email_pte,
+        telefono_pte
+    FROM
+        paciente
+    WHERE
+        id_estado = 1;
+
+--------------------------------------------------------------------------------
+---Vista 4: Detalles de las citas
+CREATE OR REPLACE VIEW detalles_citas AS
+    SELECT
+        c.id_cita,
+        c.fecha_hora,
+        p.nombre_paciente,
+        d.nombre_dentista,
+        t.descripcion_trat_pte,
+        m.descripcion_motivo
+    FROM
+             cita c
+        INNER JOIN paciente             p ON c.id_paciente = p.id_paciente
+        INNER JOIN dentista             d ON c.id_dentista = d.id_dentista
+        INNER JOIN tratamiento_paciente t ON c.id_tratamiento = t.id_trat_pte
+        INNER JOIN motivo_visita        m ON c.id_motivo = m.id_motivo;
+
+--------------------------------------------------------------------------------
+---Vista 5: Tratamientos realizados
+CREATE OR REPLACE VIEW detalles_tratamientos_completos AS
+    SELECT
+        tp.id_trat_pte,
+        tp.descripcion_trat_pte AS descripcion_tratamiento,
+        p.nombre_paciente       AS paciente,
+        d.nombre_dentista       AS dentista,
+        t.nombre_tratamiento    AS tratamiento,
+        m.descripcion_motivo    AS motivo_visita,
+        c.fecha_hora            AS fecha_cita
+    FROM
+             tratamiento_paciente tp
+        INNER JOIN paciente      p ON tp.id_paciente = p.id_paciente
+        INNER JOIN dentista      d ON tp.id_trat_pte = d.id_dentista
+        INNER JOIN tratamiento   t ON tp.id_tratamiento = t.id_tratamiento
+        INNER JOIN motivo_visita m ON tp.id_trat_pte = m.id_motivo
+        INNER JOIN cita          c ON tp.id_tratamiento = c.id_tratamiento;
+
+--------------------------------------------------------------------------------
+---Vista 6: Resumen citas x dentista
+CREATE OR REPLACE VIEW resumen_citas_dentista AS
+    SELECT
+        d.id_dentista,
+        d.nombre_dentista,
+        e.nombre_especialidad AS especialidad,
+        COUNT(c.id_cita)      AS total_citas
+    FROM
+             dentista d
+        INNER JOIN cita         c ON d.id_dentista = c.id_dentista
+        INNER JOIN especialidad e ON d.id_especialidad = e.id_especialidad
+    GROUP BY
+        d.id_dentista,
+        d.nombre_dentista,
+        e.nombre_especialidad;
+
+--------------------------------------------------------------------------------
+---Vista 7: Pacientes y su ultima cita
+CREATE OR REPLACE VIEW Pacientes_Ultima_Cita AS
 SELECT 
-    h.id_historial,
     p.id_paciente,
-    p.nombre AS nombre_paciente,
-    d.nombre AS nombre_dentista,
-    h.fecha,
-    h.observaciones,
-    t.descripcion_trat_pte,
-    diag.descripcion_diagnostico
+    p.nombre_paciente,
+    c.fecha_hora AS ultima_cita,
+    d.nombre_dentista AS dentista
 FROM 
-    CLINICA_DENTAL.Historial_clinico h
-INNER JOIN CLINICA_DENTAL.Paciente p ON h.id_paciente = p.id_paciente
-INNER JOIN CLINICA_DENTAL.Dentista d ON h.id_dentista = d.id_dentista
-INNER JOIN CLINICA_DENTAL.Tratamiento_paciente t ON h.id_trat_pte = t.id_trat_pte
-INNER JOIN CLINICA_DENTAL.Diagnostico diag ON h.id_diagnostico = diag.id_diagnostico;
+    Paciente p
+INNER JOIN Cita c ON p.id_paciente = c.id_paciente
+INNER JOIN Dentista d ON c.id_dentista = d.id_dentista
+WHERE 
+    c.fecha_hora = (
+        SELECT MAX(c2.fecha_hora)
+        FROM Cita c2
+        WHERE c2.id_paciente = p.id_paciente
+    );
 
---------------------------------------------------------------------------------
 
-
-
-----Funciones
---------------------------------------------------------------------------------
 --FUNCIONES
 --------------------------------------------------------------------------------
 --FUNCION 1: Ingreso total por metodo de pago
