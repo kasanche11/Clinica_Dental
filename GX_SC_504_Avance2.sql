@@ -856,6 +856,7 @@ BEGIN
 END;
 /
 
+-- 14. Actualizar tratamiento
 CREATE OR REPLACE PROCEDURE sp_actualizar_tratamiento (
     p_id_tratamiento          IN NUMBER,
     p_nombre_tratamiento      IN VARCHAR2 DEFAULT NULL,
@@ -910,6 +911,7 @@ EXCEPTION
 END;
 /
 
+-- 14. Actualizar tratamiento del paciente
 CREATE OR REPLACE PROCEDURE sp_actualizar_trat_pte (
     p_id_trat_pte          IN NUMBER,
     p_id_paciente          IN NUMBER DEFAULT NULL,
@@ -1086,7 +1088,55 @@ WHERE
         WHERE c2.id_paciente = p.id_paciente
     );
 
+--------------------------------------------------------------------------------
+---Vista 8: Pacientes frecuentes
+CREATE OR REPLACE VIEW pacientes_frecuentes AS
+    SELECT
+        p.id_paciente,
+        p.nombre_paciente,
+        COUNT(c.id_cita) AS total_citas
+    FROM
+             paciente p
+        INNER JOIN cita c ON p.id_paciente = c.id_paciente
+    GROUP BY
+        p.id_paciente,
+        p.nombre_paciente
+    HAVING
+        COUNT(c.id_cita) > 3
+    ORDER BY
+        total_citas DESC;
 
+--------------------------------------------------------------------------------
+---Vista 9: Tratamientos mas solicitados
+CREATE OR REPLACE VIEW tratamientos_populares AS
+    SELECT
+        t.id_tratamiento,
+        t.nombre_tratamiento,
+        COUNT(c.id_cita) AS total_citas
+    FROM
+             tratamiento t
+        INNER JOIN tratamiento_paciente tp ON t.id_tratamiento = tp.id_tratamiento
+        INNER JOIN cita                 c ON tp.id_trat_pte = c.id_tratamiento
+    GROUP BY
+        t.id_tratamiento,
+        t.nombre_tratamiento
+    ORDER BY
+        total_citas DESC;
+
+--------------------------------------------------------------------------------
+---Vista 10: Lista de dentistas activos
+CREATE OR REPLACE VIEW lista_dentistas AS
+    SELECT
+        d.id_dentista,
+        d.nombre_dentista,
+        e.nombre_especialidad
+    FROM
+             dentista d
+        INNER JOIN especialidad e ON d.id_especialidad = e.id_especialidad
+    ORDER BY
+        d.nombre_dentista;
+
+--------------------------------------------------------------------------------
 --FUNCIONES
 --------------------------------------------------------------------------------
 --FUNCION 1: Ingreso total por metodo de pago
