@@ -473,6 +473,7 @@ BEGIN
 END;
 /
 
+
 --------------------------------------------------------------------------------
 -- 2. Actualizar informacion paciente
 CREATE OR REPLACE PROCEDURE SP_actualizar_paciente (
@@ -543,45 +544,53 @@ END;
 
 --------------------------------------------------------------------------------
 -- 5. Actualizar informacion dentista
-CREATE OR REPLACE PROCEDURE SP_actualizar_dentista (
-    id_dentista IN NUMBER,
-    nombre_dentista IN VARCHAR2 DEFAULT NULL,
-    telefono_dentista IN VARCHAR2 DEFAULT NULL,
-    email_dentista IN VARCHAR2 DEFAULT NULL,
-    id_especialidad IN NUMBER DEFAULT NULL,
-    id_estado IN NUMBER DEFAULT NULL
+create or replace PROCEDURE SP_actualizar_dentista (
+    iddentista IN NUMBER,
+    nombredentista IN VARCHAR2 DEFAULT NULL,
+    telefonodentista IN VARCHAR2 DEFAULT NULL,
+    emaildentista IN VARCHAR2 DEFAULT NULL,
+    idespecialidad IN NUMBER DEFAULT NULL,
+    idestado IN NUMBER DEFAULT NULL
 )
 AS
 BEGIN
     UPDATE CLINICA_DENTAL.Dentista
-    SET nombre_dentista = NVL(nombre_dentista, nombre_dentista),
-        telefono_dentista = NVL(telefono_dentista, telefono_dentista),
-        email_dentista = NVL(email_dentista, email_dentista),
-        id_especialidad = NVL(id_especialidad, id_especialidad),
-        id_estado = NVL(id_estado, id_estado)
-    WHERE id_dentista = id_dentista;
+    SET nombre_dentista, = (nombre_dentista, nombredentista),
+        ,telefono_dentista = NVL(telefono_dentista, telefonodentista),
+        ,email_dentista = NVL(email_dentista, emaildentista),
+        ,id_especialidad = NVL(id_especialidad, idespecialidad),
+        ,id_estado = NVL(id_estado, idestado)
+    WHERE id_dentista = iddentista;
 
     IF SQL%ROWCOUNT = 0 THEN
         DBMS_OUTPUT.PUT_LINE('No se encontró el dentista. Verifique el ID.');
     END IF;
 END;
+
+EXEC SP_actualizar_dentista(1,'CASDADADADADA',55555555,'123@',1,1);
 /
 
 
 --------------------------------------------------------------------------------
 -- 6. Eliminar dentista
-CREATE OR REPLACE PROCEDURE SP_eliminar_dentista (
-    id_dentista IN NUMBER
-)
+drop PROCEDURE SP_eliminar_dentista
+
+CREATE OR REPLACE PROCEDURE SP_eliminar_dentista(IDden IN NUMBER)
 AS
 BEGIN
-    DELETE FROM CLINICA_DENTAL.Historial_clinico WHERE id_dentista = id_dentista;
-    DELETE FROM CLINICA_DENTAL.Cita WHERE id_dentista = id_dentista;
-    DELETE FROM CLINICA_DENTAL.Dentista WHERE id_dentista = id_dentista;
+    DELETE FROM CLINICA_DENTAL.Pago WHERE id_cita = (select id_cita from Cita where id_dentista = IDden);
+    DELETE FROM CLINICA_DENTAL.Cita WHERE id_dentista = IDden;
+    DELETE FROM CLINICA_DENTAL.Historial_clinico WHERE id_dentista = IDden;
+    DELETE FROM CLINICA_DENTAL.Dentista WHERE id_dentista = IDden;
 
-    DBMS_OUTPUT.PUT_LINE('Dentista eliminado con ID: ' || id_dentista);
+    DBMS_OUTPUT.PUT_LINE('Dentista eliminado con ID: ' || IDden);
+
 END;
-/
+
+set serveroutput on
+
+EXECUTE SP_eliminar_dentista(12)
+
 
 -- 7. Eliminar los registros del dentista
 CREATE OR REPLACE PROCEDURE sp_eliminar_registros_dentistas (
@@ -969,6 +978,7 @@ END;
 --VISTAS
 --------------------------------------------------------------------------------
 ---Vista 1: Vista de las citas programadas
+
 CREATE OR REPLACE VIEW vista_citas_programadas AS
     SELECT
         c.id_cita,
@@ -986,6 +996,7 @@ CREATE OR REPLACE VIEW vista_citas_programadas AS
 
 --------------------------------------------------------------------------------
 ---Vista 2: Vista de la informacion del historial del paciente
+
 CREATE VIEW vista_historial_paciente AS
     SELECT
         h.id_historial,
@@ -1196,6 +1207,7 @@ END;
 SELECT EdadPromedioPacientes() AS Edad_promedio_pacientes FROM DUAL;
 --------------------------------------------------------------------------------
 --FUNCION 4: Informacion de un dentista por su ID
+
 CREATE OR REPLACE FUNCTION ObtenerInfoDentista(dentista_id IN NUMBER)
 RETURN VARCHAR2
 IS
@@ -1286,4 +1298,12 @@ END;
 /
 SELECT TotalCitasPorEspecialidad(3) AS TotalCitas FROM DUAL;
 --------------------------------------------------------------------------------
+
+exec SP_ELIMINAR_DENTISTA(999)
+
+SELECT c.table_name, c.column_name, cc.constraint_name
+FROM all_cons_columns c
+JOIN all_constraints cc 
+ON c.constraint_name = cc.constraint_name
+WHERE cc.constraint_name = 'SYS_C007553';
 
