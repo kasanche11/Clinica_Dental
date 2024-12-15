@@ -1150,154 +1150,269 @@ CREATE OR REPLACE VIEW lista_dentistas AS
 --------------------------------------------------------------------------------
 --FUNCIONES
 --------------------------------------------------------------------------------
---FUNCION 1: Ingreso total por metodo de pago
-CREATE OR REPLACE FUNCTION IngresoTotalPorMetodoPago(metodo_pago_id NUMBER)
-RETURN NUMBER
-AS
-    totalIngreso NUMBER;
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+drop function EdadPromedioPacientes;
+drop function IngresoTotalPorMetodoPago;
+drop function ObtenerInfoDentista;
+drop function ObtenerInfoPaciente;
+drop function TotalCitasPorEspecialidad;
+drop function TotalPagosPorPaciente;
+drop function TratamientoMasComun;
+--------------------------------------------------------------------------------
+--FUNCION 1: Esta funcion contara las citas de un paciente por su ID, mostrando un mensaje con la cantidad de citas encontradas o indicando que no tiene citas.
+CREATE OR REPLACE FUNCTION contar_citas_paciente(p_id_paciente IN NUMBER)
+RETURN VARCHAR2 IS
+    v_cantidad_citas NUMBER;
 BEGIN
-    -- Calcula el ingreso total por el metodo de pago
-    SELECT SUM(monto)
-    INTO totalIngreso
+    -- Contar la cantidad de citas del paciente
+    SELECT COUNT(*) INTO v_cantidad_citas
+    FROM CITA
+    WHERE id_paciente = p_id_paciente;
+
+    -- Validar si el paciente tiene citas
+    IF v_cantidad_citas = 0 THEN
+        RETURN 'El paciente con ID ' || p_id_paciente || ' no tiene citas registradas.';
+    ELSE
+        RETURN 'El paciente con ID ' || p_id_paciente || ' tiene ' || v_cantidad_citas || ' citas.';
+    END IF;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN 'Error: No se encontro informacion para el paciente con ID: ' || p_id_paciente;
+    WHEN OTHERS THEN
+        RETURN 'Error: Ha ocurrido un problema al contar las citas del paciente. Detalles: ' || SQLERRM;
+END contar_citas_paciente;
+/
+--------------------------------------------------------------------------------
+--FUNCION 2: Esta funcion cambiara el estado de un dentista por su ID_DENTISTA. Si el dentista no existe o si el estado no es valido, se lanzara una excepcion.
+CREATE OR REPLACE FUNCTION actualizar_estado_dentista(p_id_dentista INT, p_id_estado INT)
+    RETURN VARCHAR2
+IS
+BEGIN
+    UPDATE CLINICA_DENTAL.Dentista
+    SET id_estado = p_id_estado
+    WHERE id_dentista = p_id_dentista;
+
+    IF SQL%ROWCOUNT = 0 THEN
+        RAISE_APPLICATION_ERROR(-20003, 'Error: No se encontro el dentista con el ID proporcionado.');
+    END IF;
+
+    RETURN 'Modificacion realizada con exito.';
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20004, 'Error al modificar el estado del dentista: ' || SQLERRM);
+END actualizar_estado_dentista;
+/
+--------------------------------------------------------------------------------
+--FUNCION 3: Esta funcion devuelve el nombre del tratamiento asociado a un ID_TRATAMIENTO. Si no se encuentra el tratamiento, lanzara una excepcion.
+CREATE OR REPLACE FUNCTION obtener_tratamiento_por_id(p_id_tratamiento INT)
+    RETURN VARCHAR2
+IS
+    v_nombre_tratamiento VARCHAR2(255);
+BEGIN
+    SELECT nombre_tratamiento
+    INTO v_nombre_tratamiento
+    FROM CLINICA_DENTAL.Tratamiento
+    WHERE id_tratamiento = p_id_tratamiento;
+
+    RETURN v_nombre_tratamiento;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20005, 'Error: No se encontro un tratamiento con el ID proporcionado.');
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20006, 'Error inesperado: ' || SQLERRM);
+END obtener_tratamiento_por_id;
+/
+--------------------------------------------------------------------------------
+--FUNCION 4: Esta funcion verifica si un paciente tiene citas pendientes (citas cuya fecha es futura). Retorna un mensaje segun el resultado.
+CREATE OR REPLACE FUNCTION tiene_citas_pendientes(p_id_paciente INT)
+    RETURN VARCHAR2
+IS
+    v_count INT;
+BEGIN
+    SELECT COUNT(*) INTO v_count
+    FROM CLINICA_DENTAL.Cita
+    WHERE id_paciente = p_id_paciente
+    AND fecha_hora > SYSDATE;
+
+    IF v_count > 0 THEN
+        RETURN 'El paciente tiene citas pendientes.';
+    ELSE
+        RETURN 'El paciente no tiene citas pendientes.';
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20007, 'Error al verificar las citas: ' || SQLERRM);
+END tiene_citas_pendientes;
+/
+--------------------------------------------------------------------------------
+--FUNCION 5: Esta funcion cuenta la cantidad de tratamientos realizados a un paciente, basado en el ID_PACIENTE.
+CREATE OR REPLACE FUNCTION contar_tratamientos_paciente(p_id_paciente INT)
+    RETURN INT
+IS
+    v_count INT;
+BEGIN
+    SELECT COUNT(*) INTO v_count
+    FROM CLINICA_DENTAL.Tratamiento_paciente
+    WHERE id_paciente = p_id_paciente;
+
+    RETURN v_count;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20008, 'Error al contar los tratamientos del paciente: ' || SQLERRM);
+END contar_tratamientos_paciente;
+/
+--------------------------------------------------------------------------------
+--FUNCION 6: Esta funcion devuelve el diagnostico de un paciente para una fecha especifica, lanzando una excepcion si no se encuentra.
+CREATE OR REPLACE FUNCTION obtener_diagnostico_paciente(p_id_paciente INT, p_fecha DATE)
+    RETURN VARCHAR2
+IS
+    v_diagnostico VARCHAR2(255);
+BEGIN
+    SELECT d.descripcion_diagnostico
+    INTO v_diagnostico
+    FROM CLINICA_DENTAL.Historial_clinico h
+    JOIN CLINICA_DENTAL.Diagnostico d ON h.id_diagnostico = d.id_diagnostico
+    WHERE h.id_paciente = p_id_paciente
+    AND h.fecha = p_fecha;
+
+    RETURN v_diagnostico;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20009, 'Error: No se encontro un diagnostico para la fecha especificada.');
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20010, 'Error inesperado: ' || SQLERRM);
+END obtener_diagnostico_paciente;
+/
+--------------------------------------------------------------------------------
+--FUNCION 7: Esta funcion calcula el total de los pagos realizados por un paciente dado su ID_PACIENTE.
+CREATE OR REPLACE FUNCTION obtener_monto_total_pago(p_id_paciente INT)
+    RETURN DECIMAL
+IS
+    v_total DECIMAL(10, 2);
+BEGIN
+    SELECT SUM(monto) INTO v_total
     FROM CLINICA_DENTAL.Pago
-    WHERE id_metodo_pago = metodo_pago_id;
+    WHERE id_paciente = p_id_paciente;
 
-    -- Devuelve el ingreso total calculado
-    RETURN totalIngreso;
-END;
+    RETURN NVL(v_total, 0);
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20011, 'Error al calcular el total de pagos: ' || SQLERRM);
+END obtener_monto_total_pago;
 /
-SELECT IngresoTotalPorMetodoPago(1) AS TotalIngreso FROM DUAL;
 --------------------------------------------------------------------------------
---FUNCION 2: Tratamiento mas comun
-CREATE OR REPLACE FUNCTION TratamientoMasComun
-RETURN NUMBER
+--FUNCION 8: Esta funcion valida si el correo electronico de un paciente cumple con un formato adecuado. Si no es valido, lanza una excepcion.
+CREATE OR REPLACE FUNCTION validar_email_paciente(p_email VARCHAR2)
+    RETURN VARCHAR2
 IS
-    tratamientoIdMasComun NUMBER;
 BEGIN
-    SELECT id_tratamiento
-    INTO tratamientoIdMasComun
-    FROM (
-        SELECT id_tratamiento, COUNT(*) AS frecuencia
-        FROM CLINICA_DENTAL.Tratamiento_paciente
-        GROUP BY id_tratamiento
-        ORDER BY frecuencia DESC
-    )
-    WHERE ROWNUM = 1;
+    IF NOT REGEXP_LIKE(p_email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$') THEN
+        RAISE_APPLICATION_ERROR(-20012, 'Error: El correo electronico no es valido.');
+    END IF;
 
-    RETURN tratamientoIdMasComun;
-END;
+    RETURN 'Correo electrónico válido';
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20013, 'Error al validar el correo electronico: ' || SQLERRM);
+END validar_email_paciente;
 /
--- Llamada de prueba:
-SELECT TratamientoMasComun() AS Tratamiento_mas_comun FROM DUAL;
 --------------------------------------------------------------------------------
---FUNCION 3: Edad promedio de los pacientes
-CREATE OR REPLACE FUNCTION EdadPromedioPacientes
-RETURN NUMBER
+--FUNCION 9: Esta funcion devuelve el nombre de la especialidad de un dentista basado en su ID_DENTISTA.
+CREATE OR REPLACE FUNCTION obtener_especialidad_dentista(p_id_dentista INT)
+    RETURN VARCHAR2
 IS
-    edadPromedio NUMBER;
+    v_especialidad VARCHAR2(255);
 BEGIN
-    SELECT AVG(ROUND(MONTHS_BETWEEN(SYSDATE, fecha_nacimiento) / 12, 2))
-    INTO edadPromedio
-    FROM CLINICA_DENTAL.Paciente;
+    SELECT e.nombre_especialidad
+    INTO v_especialidad
+    FROM CLINICA_DENTAL.Dentista d
+    JOIN CLINICA_DENTAL.Especialidad e ON d.id_especialidad = e.id_especialidad
+    WHERE d.id_dentista = p_id_dentista;
 
-    RETURN edadPromedio;
-END;
+    RETURN v_especialidad;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20014, 'Error: No se encontro especialidad para el dentista.');
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20015, 'Error inesperado: ' || SQLERRM);
+END obtener_especialidad_dentista;
 /
--- Llamada de prueba:
-SELECT EdadPromedioPacientes() AS Edad_promedio_pacientes FROM DUAL;
 --------------------------------------------------------------------------------
---FUNCION 4: Informacion de un dentista por su ID
-
-CREATE OR REPLACE FUNCTION ObtenerInfoDentista(dentista_id IN NUMBER)
-RETURN VARCHAR2
+--FUNCION 10: Esta funcion cuenta cuantos pacientes estan asociados con un estado especifico.
+CREATE OR REPLACE FUNCTION contar_pacientes_por_estado(p_id_estado INT)
+    RETURN INT
 IS
-    resultado VARCHAR2(1000);
+    v_count INT;
 BEGIN
-    SELECT 'Nombre: ' || nombre_dentista || 
-           ', Telefono: ' || telefono_dentista || 
-           ', Email: ' || email_dentista || 
-           ', Especialidad: ' || nombre_especialidad || 
-           ', Estado: ' || descripcion_estado
-    INTO resultado
-    FROM CLINICA_DENTAL.Dentista
-    JOIN CLINICA_DENTAL.Especialidad ON CLINICA_DENTAL.Dentista.id_especialidad = CLINICA_DENTAL.Especialidad.id_especialidad
-    JOIN CLINICA_DENTAL.Estado ON CLINICA_DENTAL.Dentista.id_estado = CLINICA_DENTAL.Estado.id_estado
-    WHERE CLINICA_DENTAL.Dentista.id_dentista = dentista_id;
-
-    RETURN resultado;
-END;
-/
--- Llamada de prueba:
-SELECT ObtenerInfoDentista(4) AS Info_Dentista FROM DUAL;
---------------------------------------------------------------------------------
---FUNCION 5: Informacion de un paciente por su ID
-CREATE OR REPLACE FUNCTION ObtenerInfoPaciente(paciente_id IN NUMBER)
-RETURN VARCHAR2
-IS
-    resultado VARCHAR2(1000);
-BEGIN
-    SELECT 'Nombre: ' || nombre_paciente || 
-           ', Fecha de Nacimiento: ' || TO_CHAR(fecha_nacimiento, 'DD/MM/YYYY') || 
-           ', Edad: ' || edad || 
-           ', Telefono: ' || telefono_pte || 
-           ', Email: ' || email_pte || 
-           ', Estado: ' || descripcion_estado
-    INTO resultado
+    SELECT COUNT(*) INTO v_count
     FROM CLINICA_DENTAL.Paciente
-    JOIN CLINICA_DENTAL.Estado ON CLINICA_DENTAL.Paciente.id_estado = CLINICA_DENTAL.Estado.id_estado
-    WHERE CLINICA_DENTAL.Paciente.id_paciente = paciente_id;
+    WHERE id_estado = p_id_estado;
 
-    RETURN resultado;
-END;
+    RETURN v_count;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20016, 'Error al contar pacientes por estado: ' || SQLERRM);
+END contar_pacientes_por_estado;
 /
--- Llamada de prueba:
-SELECT ObtenerInfoPaciente(4) AS Info_Paciente FROM DUAL;
 --------------------------------------------------------------------------------
---FUNCION 6: Cantidad de pago por cliente
-CREATE OR REPLACE FUNCTION TotalPagosPorPaciente(paciente_id NUMBER)
-RETURN NUMBER
-AS
-    totalPagos NUMBER;
+--FUNCION 11: Esta funcion busca al cliente por medio de su ID, utilizando SQL Dinamico.
+CREATE OR REPLACE FUNCTION buscar_cliente(p_id_paciente IN NUMBER)
+RETURN VARCHAR2 IS
+    v_resultado VARCHAR2(1000);
 BEGIN
-    -- Calcula la suma de los pagos por paciente
-    SELECT SUM(monto)
-    INTO totalPagos
-    FROM CLINICA_DENTAL.Pago
-    WHERE id_paciente = paciente_id;
+    -- Construir el SQL dinamico para obtener la informacion del paciente
+    EXECUTE IMMEDIATE
+        'SELECT ''Nombre: '' || NOMBRE_PACIENTE || '', Fecha de Nacimiento: '' || TO_CHAR(FECHA_NACIMIENTO, ''YYYY-MM-DD'') ||
+                '', Edad: '' || EDAD || '', Telefono: '' || TELEFONO_PTE || '', Email: '' || EMAIL_PTE
+         FROM PACIENTE
+         WHERE ID_PACIENTE = :ID'
+    INTO v_resultado
+    USING p_id_paciente;
 
-    -- Si no hay pagos, retorna 0
-    IF totalPagos IS NULL THEN
-        RETURN 0;
-    ELSE
-        RETURN totalPagos;
-    END IF;
-END;
+    -- Retornar el resultado
+    RETURN v_resultado;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN 'Error: No se encontro un paciente con el ID: ' || p_id_paciente;
+    WHEN OTHERS THEN
+        RETURN 'Error: Ha ocurrido un problema al buscar el paciente. Detalles: ' || SQLERRM;
+END buscar_cliente;
 /
-SELECT TotalPagosPorPaciente(1) AS TotalPagos FROM DUAL;
 --------------------------------------------------------------------------------
---FUNCION 7: Citas ordenadas por especialidad
-CREATE OR REPLACE FUNCTION TotalCitasPorEspecialidad(especialidad_id NUMBER)
-RETURN NUMBER
-AS
-    totalCitas NUMBER;
+--FUNCION 12: Esta funcion busca al dentista por medio de su ID, utilizando SQL Dinamico.
+CREATE OR REPLACE FUNCTION buscar_dentista(p_id_dentista IN NUMBER)
+RETURN VARCHAR2 IS
+    v_sql VARCHAR2(500);
+    v_resultado VARCHAR2(200);
 BEGIN
-    -- Cuenta las citas por especialidad
-    SELECT COUNT(*)
-    INTO totalCitas
-    FROM CLINICA_DENTAL.Cita c
-    JOIN CLINICA_DENTAL.Dentista d ON c.id_dentista = d.id_dentista
-    WHERE d.id_especialidad = especialidad_id;
+    -- Construimos la consulta de manera dinamica
+    v_sql := 'SELECT NOMBRE_DENTISTA || '', Teléfono: '' || TELEFONO_DENTISTA || '', Email: '' || EMAIL_DENTISTA 
+              FROM CLINICA_DENTAL.DENTISTA 
+              WHERE ID_DENTISTA = :1';
 
-    -- Si no hay citas, retorna 0
-    IF totalCitas IS NULL THEN
-        RETURN 0;
-    ELSE
-        RETURN totalCitas;
-    END IF;
-END;
+    -- Ejecutamos SQL dinamico
+    EXECUTE IMMEDIATE v_sql INTO v_resultado USING p_id_dentista;
+
+    -- Retornamos la informacion del dentista
+    RETURN 'Información del Dentista: ' || v_resultado;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        -- Excepcion si no se encuentra el dentista
+        RETURN 'Error: No se encontró un dentista con el ID: ' || p_id_dentista;
+    WHEN OTHERS THEN
+        -- Manejo de errores genericos
+        RETURN 'Error: Ha ocurrido un problema al buscar el dentista. Detalles: ' || SQLERRM;
+END buscar_dentista;
 /
-SELECT TotalCitasPorEspecialidad(3) AS TotalCitas FROM DUAL;
 --------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 
 exec SP_ELIMINAR_DENTISTA(999)
 
