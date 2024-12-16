@@ -477,26 +477,26 @@ END;
 --------------------------------------------------------------------------------
 -- 2. Actualizar informacion paciente
 CREATE OR REPLACE PROCEDURE SP_actualizar_paciente (
-    id_paciente IN NUMBER,
-    nombre_paciente IN VARCHAR2 DEFAULT NULL,
-    fecha_nacimiento IN DATE DEFAULT NULL,
-    edad IN NUMBER DEFAULT NULL,
-    telefono_pte IN VARCHAR2 DEFAULT NULL,
-    email_pte IN VARCHAR2 DEFAULT NULL,
-    fecha_registro IN DATE DEFAULT NULL,
-    id_estado IN NUMBER DEFAULT NULL
+    idpaciente IN NUMBER,
+    nombrepaciente IN VARCHAR2 DEFAULT NULL,
+    fechanacimiento IN DATE DEFAULT NULL,
+    edadp IN NUMBER DEFAULT NULL,
+    telefonopte IN VARCHAR2 DEFAULT NULL,
+    emailpte IN VARCHAR2 DEFAULT NULL,
+    fecharegistro IN DATE DEFAULT NULL,
+    idestado IN NUMBER DEFAULT NULL
 )
 AS
 BEGIN
     UPDATE CLINICA_DENTAL.Paciente
-    SET nombre_paciente = NVL(nombre_paciente, nombre_paciente),
-        fecha_nacimiento = NVL(fecha_nacimiento, fecha_nacimiento),
-        edad = NVL(edad, edad),
-        telefono_pte = NVL(telefono_pte, telefono_pte),
-        email_pte = NVL(email_pte, email_pte),
-        fecha_registro = NVL(fecha_registro, fecha_registro),
-        id_estado = NVL(id_estado, id_estado)
-    WHERE id_paciente = id_paciente;
+    SET nombre_paciente = NVL(nombrepaciente, nombrepaciente),
+        fecha_nacimiento = NVL(fechanacimiento, fechanacimiento),
+        edad = NVL(edadp, edadp),
+        telefono_pte = NVL(telefonopte, telefonopte),
+        email_pte = NVL(emailpte, emailpte),
+        fecha_registro = NVL(fecharegistro, fecharegistro),
+        id_estado = NVL(idestado, idestado)
+    WHERE id_paciente = idpaciente;
 
     IF SQL%ROWCOUNT = 0 THEN
         DBMS_OUTPUT.PUT_LINE('No se encontró el paciente. Verifique el ID.');
@@ -507,14 +507,14 @@ END;
 --------------------------------------------------------------------------------
 -- 3. Cambiar estado paciente
 CREATE OR REPLACE PROCEDURE SP_actualizar_estado_paciente (
-    id_paciente IN NUMBER,
-    id_estado IN NUMBER
+    idpaciente IN NUMBER,
+    idestado IN NUMBER
 )
 AS
 BEGIN
     UPDATE CLINICA_DENTAL.Paciente
-    SET id_estado = id_estado
-    WHERE id_paciente = id_paciente;
+    SET id_estado = idestado
+    WHERE id_paciente = idpaciente;
 
     IF SQL%ROWCOUNT = 0 THEN
         DBMS_OUTPUT.PUT_LINE('No se encontró el paciente. Verifique el ID.');
@@ -525,17 +525,17 @@ END;
 --------------------------------------------------------------------------------
 -- 4. Agregar nuevo dentista
 CREATE OR REPLACE PROCEDURE SP_agregar_dentista (
-    id_dentista IN NUMBER,
-    nombre_dentista IN VARCHAR2,
-    telefono_dentista IN VARCHAR2,
-    email_dentista IN VARCHAR2,
-    id_especialidad IN NUMBER,
-    id_estado IN NUMBER
+    iddentista IN NUMBER,
+    nombredentista IN VARCHAR2,
+    telefonodentista IN VARCHAR2,
+    emaildentista IN VARCHAR2,
+    idespecialidad IN NUMBER,
+    idestado IN NUMBER
 )
 AS
 BEGIN
     INSERT INTO CLINICA_DENTAL.Dentista (id_dentista, nombre_dentista, telefono_dentista, email_dentista, id_especialidad, id_estado)
-    VALUES (id_dentista, nombre_dentista, telefono_dentista, email_dentista, id_especialidad, id_estado);
+    VALUES (iddentista, nombredentista, telefonodentista, emaildentista, idespecialidad, idestado);
 
     DBMS_OUTPUT.PUT_LINE('Dentista agregado: ' || id_dentista || ' - ' || nombre_dentista);
 END;
@@ -555,11 +555,11 @@ create or replace PROCEDURE SP_actualizar_dentista (
 AS
 BEGIN
     UPDATE CLINICA_DENTAL.Dentista
-    SET nombre_dentista, = (nombre_dentista, nombredentista),
-        ,telefono_dentista = NVL(telefono_dentista, telefonodentista),
-        ,email_dentista = NVL(email_dentista, emaildentista),
-        ,id_especialidad = NVL(id_especialidad, idespecialidad),
-        ,id_estado = NVL(id_estado, idestado)
+    SET nombre_dentista = NVL(nombredentista, nombredentista),
+        telefono_dentista = NVL(telefonodentista, telefonodentista),
+        email_dentista = NVL(emaildentista, emaildentista),
+        id_especialidad = NVL(idespecialidad, idespecialidad),
+        id_estado = NVL(idestado, idestado)
     WHERE id_dentista = iddentista;
 
     IF SQL%ROWCOUNT = 0 THEN
@@ -567,7 +567,6 @@ BEGIN
     END IF;
 END;
 
-EXEC SP_actualizar_dentista(1,'CASDADADADADA',55555555,'123@',1,1);
 /
 
 
